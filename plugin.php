@@ -132,9 +132,9 @@ function register_connector_metadata($registry): void
     ];
 
     if (!isset($connector['logo_url'])) {
-        $logoPath = dirname(__FILE__) . '/assets/images/openai.svg';
+        $logoPath = dirname(__FILE__) . '/assets/images/icon.svg';
         if (file_exists($logoPath) && function_exists('plugins_url')) {
-            $connector['logo_url'] = plugins_url('assets/images/openai.svg', __FILE__);
+            $connector['logo_url'] = plugins_url('assets/images/icon.svg', __FILE__);
         }
     }
 
