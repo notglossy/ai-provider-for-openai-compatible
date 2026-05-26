@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace WordPress\OpenAiAiProvider\Models;
+namespace NotGlossy\AiProviderForOpenAiCompatible\Models;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Provider\OpenAiProvider;
 use WordPress\AiClient\Files\Enums\MediaOrientationEnum;
 use WordPress\AiClient\Providers\Http\DTO\Request;
 use WordPress\AiClient\Providers\Http\Enums\HttpMethodEnum;
 use WordPress\AiClient\Providers\OpenAiCompatibleImplementation\AbstractOpenAiCompatibleImageGenerationModel;
-use WordPress\OpenAiAiProvider\Provider\OpenAiProvider;
 
 /**
  * Class for an OpenAI image generation model using the Images API.

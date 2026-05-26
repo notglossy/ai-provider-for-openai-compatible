@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace WordPress\OpenAiAiProvider\Metadata;
+namespace NotGlossy\AiProviderForOpenAiCompatible\Metadata;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Provider\OpenAiProvider;
+use NotGlossy\AiProviderForOpenAiCompatible\Settings\Settings;
 use WordPress\AiClient\Files\Enums\FileTypeEnum;
 use WordPress\AiClient\Files\Enums\MediaOrientationEnum;
 use WordPress\AiClient\Messages\Enums\ModalityEnum;
@@ -16,7 +18,6 @@ use WordPress\AiClient\Providers\Models\DTO\SupportedOption;
 use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
 use WordPress\AiClient\Providers\Models\Enums\OptionEnum;
 use WordPress\AiClient\Providers\OpenAiCompatibleImplementation\AbstractOpenAiCompatibleModelMetadataDirectory;
-use WordPress\OpenAiAiProvider\Provider\OpenAiProvider;
 
 /**
  * Class for the OpenAI model metadata directory.
@@ -191,53 +192,70 @@ class OpenAiModelMetadataDirectory extends AbstractOpenAiCompatibleModelMetadata
                     $ttsOptions
                 ): ModelMetadata {
                     $modelId = $modelData['id'];
+                    // OpenRouter / Together / Groq / etc. prefix model IDs with the
+                    // upstream vendor (e.g. `openai/gpt-4o`, `anthropic/claude-3.5-sonnet`).
+                    // Strip the leading `vendor/` so all pattern matching below
+                    // applies uniformly to direct-OpenAI IDs and proxied ones.
+                    $normalizedId = self::normalizeModelId($modelId);
                     if (
-                        str_starts_with($modelId, 'dall-e-') ||
-                        str_starts_with($modelId, 'gpt-image-')
+                        str_starts_with($normalizedId, 'dall-e-') ||
+                        str_starts_with($normalizedId, 'gpt-image-')
                     ) {
                         $modelCaps = $imageCapabilities;
-                        if (str_starts_with($modelId, 'gpt-image-')) {
+                        if (str_starts_with($normalizedId, 'gpt-image-')) {
                             $modelOptions = $gptImageOptions;
                         } else {
                             $modelOptions = $dalleImageOptions;
                         }
                     } elseif (
-                        str_starts_with($modelId, 'tts-') ||
-                        str_contains($modelId, '-tts')
+                        str_starts_with($normalizedId, 'tts-') ||
+                        str_contains($normalizedId, '-tts')
                     ) {
                         $modelCaps = $ttsCapabilities;
                         $modelOptions = $ttsOptions;
                     } elseif (
                         (
-                            str_starts_with($modelId, 'gpt-')
-                            || str_starts_with($modelId, 'o1')
-                            || str_starts_with($modelId, 'o3')
-                            || str_starts_with($modelId, 'o4')
-                            || $modelId === 'codex-mini-latest'
+                            str_starts_with($normalizedId, 'gpt-')
+                            || str_starts_with($normalizedId, 'o1')
+                            || str_starts_with($normalizedId, 'o3')
+                            || str_starts_with($normalizedId, 'o4')
+                            || $normalizedId === 'codex-mini-latest'
                         )
-                        && !str_contains($modelId, '-instruct')
-                        && !str_contains($modelId, '-realtime')
-                        && !str_contains($modelId, '-transcribe')
+                        && !str_contains($normalizedId, '-instruct')
+                        && !str_contains($normalizedId, '-realtime')
+                        && !str_contains($normalizedId, '-transcribe')
                     ) {
-                        if (self::supportsMultimodalTextInput($modelId)) {
+                        if (self::supportsMultimodalTextInput($normalizedId)) {
                             $modelCaps = $gptCapabilities;
                             $modelOptions = $gptMultimodalInputOptions;
                             // New multimodal output model for audio generation.
-                            if (str_contains($modelId, '-audio')) {
+                            if (str_contains($normalizedId, '-audio')) {
                                 $modelOptions = $gptMultimodalSpeechOutputOptions;
-                            } elseif (str_contains($modelId, '-search')) {
+                            } elseif (str_contains($normalizedId, '-search')) {
                                 $modelOptions = $gptSearchOptions;
                             }
-                        } elseif (!str_contains($modelId, '-audio')) {
+                        } elseif (!str_contains($normalizedId, '-audio')) {
                             $modelCaps = $gptCapabilities;
                             $modelOptions = $gptOptions;
                         } else {
-                            $modelCaps = [];
-                            $modelOptions = [];
+                            [$modelCaps, $modelOptions] = self::resolveDefaultClassification(
+                                $gptCapabilities,
+                                $gptOptions
+                            );
                         }
+                    } elseif (self::supportsMultimodalTextInput($normalizedId)) {
+                        // Non-OpenAI multimodal text-gen families: Anthropic Claude 3+,
+                        // Google Gemini 1.5+, Mistral Pixtral, Meta Llama-Vision, Qwen-VL,
+                        // LLaVA, etc. All speak the OpenAI Chat Completions API with the
+                        // standard image_url content-part shape, so the existing options
+                        // apply unchanged.
+                        $modelCaps = $gptCapabilities;
+                        $modelOptions = $gptMultimodalInputOptions;
                     } else {
-                        $modelCaps = [];
-                        $modelOptions = [];
+                        [$modelCaps, $modelOptions] = self::resolveDefaultClassification(
+                            $gptCapabilities,
+                            $gptOptions
+                        );
                     }
 
                     return new ModelMetadata(
@@ -257,19 +275,95 @@ class OpenAiModelMetadataDirectory extends AbstractOpenAiCompatibleModelMetadata
     }
 
     /**
-     * Checks whether an OpenAI text generation model supports multimodal input.
+     * Decides what capability/option set to assign to a model that didn't match any
+     * OpenAI naming pattern.
+     *
+     * In strict mode the model is dropped (empty arrays). In permissive mode — the
+     * default — it's treated as a plain text-generation model with the standard
+     * text-only options. This is what makes Ollama/vLLM/LM Studio model IDs like
+     * `llama3:8b` or `mistral-7b-instruct` usable without per-server hand-tuning.
+     *
+     * @since 1.1.0
+     *
+     * @param list<CapabilityEnum> $gptCapabilities The shared text-generation capability set.
+     * @param list<SupportedOption> $gptOptions The shared text-only option set.
+     * @return array{0: list<CapabilityEnum>, 1: list<SupportedOption>}
+     */
+    private static function resolveDefaultClassification(array $gptCapabilities, array $gptOptions): array
+    {
+        if (Settings::isStrictModelMode()) {
+            return [[], []];
+        }
+        return [$gptCapabilities, $gptOptions];
+    }
+
+    /**
+     * Strips a leading `vendor/` prefix from a model ID.
+     *
+     * OpenAI-compatible aggregators namespace model IDs by upstream vendor
+     * (e.g. `openai/gpt-4o`, `anthropic/claude-3.5-sonnet`,
+     * `meta-llama/llama-3.2-90b-vision-instruct`). The classification logic
+     * works on the bare model family identifier, so strip the prefix once at
+     * the top and run all pattern checks on the result.
+     *
+     * IDs without a slash are returned unchanged.
+     *
+     * @since 1.1.0
+     *
+     * @param string $modelId Raw model ID as returned by the provider's `/models` endpoint.
+     * @return string The bare model identifier (vendor prefix removed).
+     */
+    private static function normalizeModelId(string $modelId): string
+    {
+        $slash = strpos($modelId, '/');
+        if ($slash === false) {
+            return $modelId;
+        }
+        return substr($modelId, $slash + 1);
+    }
+
+    /**
+     * Checks whether a text-generation model accepts image input (i.e. is
+     * "vision-capable"). Operates on a vendor-prefix-stripped model ID — pass
+     * the result of {@see normalizeModelId()}.
+     *
+     * Covers OpenAI's multimodal lineup plus the major cross-provider vision
+     * families that ship via OpenAI-compatible aggregators (Anthropic Claude
+     * 3+, Google Gemini 1.5+, Mistral Pixtral, Meta Llama-Vision, Qwen-VL,
+     * LLaVA, and anything that names itself with a `vision` or `-vl-` token).
      *
      * @since 1.0.3
      *
-     * @param string $modelId The model ID.
-     * @return bool True if the model supports multimodal text input, false otherwise.
+     * @param string $modelId Normalized model ID (no `vendor/` prefix).
+     * @return bool True if the model accepts image input.
      */
     private static function supportsMultimodalTextInput(string $modelId): bool
     {
-        return (bool) preg_match(
-            '/^(codex-mini-latest|gpt-4-turbo|gpt-4o|gpt-4\.1|gpt-5(?:\.\d+)?|o1|o3|o4)/',
-            $modelId
-        );
+        // Well-known multimodal model families, matched at the start of the ID.
+        $familyPattern = '/^(' .
+            // OpenAI.
+            'codex-mini-latest|gpt-4-turbo|gpt-4o|gpt-4\.1|gpt-5(?:\.\d+)?|o1|o3|o4' .
+            // Anthropic Claude 3+.
+            '|claude-(?:3|4|5|sonnet|opus|haiku)' .
+            // Google Gemini 1.5+.
+            '|gemini-(?:1\.5|2|3)' .
+            // Mistral vision.
+            '|pixtral' .
+            // LLaVA, CogVLM, Fuyu, Moondream — common open vision families.
+            '|llava|cogvlm|fuyu|moondream' .
+        ')/';
+        if (preg_match($familyPattern, $modelId)) {
+            return true;
+        }
+
+        // Token-based catch-all for less-conventionally-named vision models:
+        // anything containing `vision` or `-vl-` / `-vl` as a token boundary
+        // (e.g. `llama-3.2-90b-vision-instruct`, `qwen2-vl-72b-instruct`).
+        if (preg_match('/(?:^|[-_.])(vision|vl)(?:[-_.]|$)/i', $modelId)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -289,6 +383,20 @@ class OpenAiModelMetadataDirectory extends AbstractOpenAiCompatibleModelMetadata
     {
         $aId = $a->getId();
         $bId = $b->getId();
+
+        // User-pinned default model wins above all other rules. The AI Client's
+        // `getConfiguredModel()` falls back to "first candidate" when no model
+        // is explicitly passed, so sorting the configured default to position 0
+        // makes it the de-facto default for any call that doesn't override.
+        $defaultModel = Settings::getDefaultModel();
+        if ($defaultModel !== '') {
+            if ($aId === $defaultModel && $bId !== $defaultModel) {
+                return -1;
+            }
+            if ($bId === $defaultModel && $aId !== $defaultModel) {
+                return 1;
+            }
+        }
 
         // Prefer non-preview models over preview models.
         if (str_contains($aId, '-preview') && !str_contains($bId, '-preview')) {

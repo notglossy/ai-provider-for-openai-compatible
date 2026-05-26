@@ -1,24 +1,30 @@
 {
-    "name": "wordpress/ai-provider-for-openai",
-    "description": "AI Provider for OpenAI for the PHP AI Client SDK. Works as both a Composer package and WordPress plugin.",
+    "name": "notglossy/ai-provider-for-openai-compatible",
+    "description": "WordPress plugin that adds an AI provider for any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.) to the PHP AI Client SDK that ships with WordPress 7.0.",
     "license": "GPL-2.0-or-later",
     "keywords": [
         "ai",
         "openai",
+        "openai-compatible",
         "gpt",
         "wordpress",
-        "llm"
+        "llm",
+        "llm-gateway",
+        "ollama",
+        "groq",
+        "together",
+        "openrouter"
     ],
     "authors": [
         {
-            "name": "WordPress AI Team",
-            "homepage": "https://make.wordpress.org/ai/"
+            "name": "Not Glossy",
+            "homepage": "https://github.com/notglossy"
         }
     ],
-    "homepage": "https://github.com/WordPress/ai-provider-for-openai",
+    "homepage": "https://github.com/notglossy/ai-provider-for-openai-compatible",
     "support": {
-        "issues": "https://github.com/WordPress/ai-provider-for-openai/issues",
-        "source": "https://github.com/WordPress/ai-provider-for-openai"
+        "issues": "https://github.com/notglossy/ai-provider-for-openai-compatible/issues",
+        "source": "https://github.com/notglossy/ai-provider-for-openai-compatible"
     },
     "require": {
         "php": ">=7.4"
@@ -38,7 +44,7 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "WordPress\\OpenAiAiProvider\\": "src/"
+            "NotGlossy\\AiProviderForOpenAiCompatible\\": "src/"
         }
     },
     "config": {

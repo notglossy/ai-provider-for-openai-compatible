@@ -3,3 +3,29 @@ parameters:
     paths:
         - src
     treatPhpDocTypesAsCertain: false
+    # WordPress core functions and globals aren't typed for phpstan without a stub
+    # package. Until one is added as a dev dep, ignore the "function not found" and
+    # cascading mixed-type errors caused by those functions returning untyped values.
+    ignoreErrors:
+        -
+            message: '#Function (add_action|add_options_page|add_settings_section|add_settings_field|add_settings_error|register_setting|settings_fields|do_settings_sections|submit_button|current_user_can|wp_die|delete_option|update_option|get_option|esc_url_raw|sanitize_text_field|checked|esc_html|esc_html__|esc_html_e|esc_attr|esc_textarea|esc_url|_e|__) not found\.#'
+        -
+            message: '#Cannot cast mixed to string\.#'
+            paths:
+                - src/Admin/SettingsPage.php
+        -
+            message: '#expects string, mixed given\.#'
+            paths:
+                - src/Admin/SettingsPage.php
+        -
+            message: '#expects bool\|float\|int\|string\|null, mixed given\.#'
+            paths:
+                - src/Admin/SettingsPage.php
+        -
+            message: '#Parameter \#1 \(mixed\) of echo cannot be converted to string\.#'
+            paths:
+                - src/Admin/SettingsPage.php
+        -
+            message: '#Binary operation "\." between .+ and mixed results in an error\.#'
+            paths:
+                - src/Admin/SettingsPage.php

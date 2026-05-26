@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace WordPress\OpenAiAiProvider\Models;
+namespace NotGlossy\AiProviderForOpenAiCompatible\Models;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Provider\OpenAiProvider;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 use WordPress\AiClient\Common\Exception\RuntimeException;
 use WordPress\AiClient\Messages\DTO\Message;
@@ -23,7 +24,6 @@ use WordPress\AiClient\Results\Enums\FinishReasonEnum;
 use WordPress\AiClient\Tools\DTO\FunctionCall;
 use WordPress\AiClient\Tools\DTO\FunctionDeclaration;
 use WordPress\AiClient\Tools\DTO\WebSearch;
-use WordPress\OpenAiAiProvider\Provider\OpenAiProvider;
 
 /**
  * Class for an OpenAI text generation model using the Responses API.
