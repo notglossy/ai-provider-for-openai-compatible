@@ -49,29 +49,41 @@ class OpenAiProvider extends AbstractApiProvider
      */
     protected static function createModel(
         ModelMetadata $modelMetadata,
-        ProviderMetadata $providerMetadata
+        ProviderMetadata $providerMetadata,
     ): ModelInterface {
         $capabilities = $modelMetadata->getSupportedCapabilities();
         foreach ($capabilities as $capability) {
             if ($capability->isTextGeneration()) {
-                if (Settings::getResolvedApiStyle() === Settings::API_STYLE_CHAT_COMPLETIONS) {
-                    return new OpenAiChatCompletionsTextGenerationModel($modelMetadata, $providerMetadata);
+                if (
+                    Settings::getResolvedApiStyle() ===
+                    Settings::API_STYLE_CHAT_COMPLETIONS
+                ) {
+                    return new OpenAiChatCompletionsTextGenerationModel(
+                        $modelMetadata,
+                        $providerMetadata,
+                    );
                 }
-                return new OpenAiTextGenerationModel($modelMetadata, $providerMetadata);
+                return new OpenAiTextGenerationModel(
+                    $modelMetadata,
+                    $providerMetadata,
+                );
             }
             if ($capability->isImageGeneration()) {
-                return new OpenAiImageGenerationModel($modelMetadata, $providerMetadata);
+                return new OpenAiImageGenerationModel(
+                    $modelMetadata,
+                    $providerMetadata,
+                );
             }
             if ($capability->isTextToSpeechConversion()) {
                 // TODO: Implement OpenAiTextToSpeechConversionModel.
                 throw new RuntimeException(
-                    'OpenAI text to speech conversion model class is not yet implemented.'
+                    "OpenAI text to speech conversion model class is not yet implemented.",
                 );
             }
         }
 
         throw new RuntimeException(
-            'Unsupported model capabilities: ' . implode(', ', $capabilities)
+            "Unsupported model capabilities: " . implode(", ", $capabilities),
         );
     }
 
@@ -83,26 +95,31 @@ class OpenAiProvider extends AbstractApiProvider
     protected static function createProviderMetadata(): ProviderMetadata
     {
         $providerMetadataArgs = [
-            'openai-compatible',
+            "openai-compatible",
             Settings::getProviderLabel(),
             ProviderTypeEnum::cloud(),
-            'https://platform.openai.com/api-keys',
-            RequestAuthenticationMethod::apiKey()
+            "https://platform.openai.com/api-keys",
+            RequestAuthenticationMethod::apiKey(),
         ];
         // Provider description support was added in 1.2.0.
-        if (version_compare(AiClient::VERSION, '1.2.0', '>=')) {
+        if (version_compare(AiClient::VERSION, "1.2.0", ">=")) {
             // For WordPress, we should translate the description.
-            if (function_exists('__')) {
+            if (function_exists("__")) {
                 // phpcs:ignore Generic.Files.LineLength.TooLong
-                $providerMetadataArgs[] = __('Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).', 'ai-provider-for-openai-compatible');
+                $providerMetadataArgs[] = __(
+                    "Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).",
+                    "ai-provider-for-openai-compatible",
+                );
             } else {
                 // phpcs:ignore Generic.Files.LineLength.TooLong
-                $providerMetadataArgs[] = 'Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).';
+                $providerMetadataArgs[] =
+                    "Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).";
             }
         }
         // Provider logoPath support was added in 1.3.0.
-        if (version_compare(AiClient::VERSION, '1.3.0', '>=')) {
-            $providerMetadataArgs[] = dirname(__DIR__, 2) . '/assets/images/openai.svg';
+        if (version_compare(AiClient::VERSION, "1.3.0", ">=")) {
+            $providerMetadataArgs[] =
+                dirname(__DIR__, 2) . "/assets/images/icon.svg";
         }
         return new ProviderMetadata(...$providerMetadataArgs);
     }
@@ -116,7 +133,7 @@ class OpenAiProvider extends AbstractApiProvider
     {
         // Check valid API access by attempting to list models.
         return new ListModelsApiBasedProviderAvailability(
-            static::modelMetadataDirectory()
+            static::modelMetadataDirectory(),
         );
     }
 
