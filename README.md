@@ -6,6 +6,12 @@ A WordPress plugin that adds an AI Provider for **any OpenAI-compatible endpoint
 
 On WordPress 7.0+ the plugin registers itself as a [Connector](https://make.wordpress.org/core/2026/03/18/introducing-the-connectors-api-in-wordpress-7-0/) — the API key lives on the core **Settings → Connectors** screen alongside the Base URL, and the plugin's own settings page handles the rest (provider label, API style, model classification).
 
+## Why
+
+When I saw that WordPress was adding a new connector and AI ecosystem, I was excited — there's a lot AI can do to help simplify managing a large site. I was especially excited about the ability to generate ALT tags for images, since this is still one of the most overlooked areas for accessibility. Having a proper pipeline to ensure accurate, meaningful descriptions (e.g., not starting with "A picture of...") is key to enabling better access for everyone.
+
+While WordPress shipped support for Anthropic and OpenAI platforms (and Vercel has a plugin for their platform), I was disappointed there was no straightforward way for those who wanted to leverage alternatives (like OpenRouter) or private/internal systems (like Ollama, LiteLLM, or Bedrock). This plugin adds the ability to specify an API key and an API base URL, broadening the range of available providers considerably.
+
 ## Requirements
 
 - WordPress 7.0 or higher
@@ -98,6 +104,9 @@ Models are classified by ID, with vendor-prefix awareness (so `openai/gpt-4o` fr
 - **Provider ID renamed:** `'openai'` → `'openai-compatible'`. Any code calling `->usingProvider('openai')` must be updated to `'openai-compatible'` to keep talking to *this* plugin.
 - **`'openai'` still works** — but it now resolves to the SDK's *built-in* `OpenAiProvider` that the SDK auto-registers in `AiClient::defaultRegistry()` since version 0.4. The built-in is a leaner OpenAI-only provider (hardcoded base URL, no cross-provider model detection). To get this plugin's behavior, switch the call site to `'openai-compatible'`.
 - **Existing `OPENAI_API_KEY`** is still honored as a fallback — no immediate action required, but configure the new connector or `AI_PROVIDER_FOR_OPENAI_COMPATIBLE_API_KEY` constant before the fallback is removed in a future major.
+
+## AI Use Disclaimer
+AI was used in the porting and development of this plugin.
 
 ## License
 
