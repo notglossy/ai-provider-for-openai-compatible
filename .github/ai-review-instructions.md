@@ -53,3 +53,25 @@ Decided on PR #2:
 
 - Upstream's Props Bot and WordPress.org deploy workflows were removed on
   purpose. Do not suggest restoring them after an upstream merge.
+
+Decided on PR #3 (this review tooling):
+
+- `.github/scripts/ai_review.py` and this file are kept identical to
+  `notglossy/secure-oidc-login`'s copies so fixes flow between the repos.
+  Trimming the script for this repo alone (dropping the OpenCode backend,
+  the C-quoted diff-path decoder, or the prose-format fallback) is not
+  wanted; the OpenCode backend is the one this repo runs.
+- The reviewer script and this file are deliberately loaded from the PR
+  head, not the base branch, so a PR that changes them is reviewed under
+  its own rules. This is not an injection surface: the workflow's fork
+  guard restricts runs to same-repo PRs, whose authors already control the
+  whole review script via the merge commit that `pull_request` events
+  execute.
+- The GitHub API helper in the script sends JSON bodies without an explicit
+  `Content-Type` header. GitHub accepts this; every review the tool posts,
+  including the ones on PR #3, went through that path. Do not flag it as a
+  failure.
+- OpenCode is installed from a pinned npm platform tarball verified by
+  sha256, not `curl | bash`, and the Ponytail OpenCode plugin is pinned to
+  the release matching `AI_PONYTAIL_REF`. Bump version and checksum
+  together.
