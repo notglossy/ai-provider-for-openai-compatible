@@ -357,7 +357,9 @@ class OpenAiImageGenerationModel extends AbstractOpenAiCompatibleImageGeneration
             }
         }
 
-        // Custom options (e.g., quality, background, mask for GPT models).
+        // Custom options (e.g., quality, background for GPT models). Values must be
+        // scalar: the multipart body only carries text fields, so file-typed options
+        // such as `mask` cannot be passed this way.
         $customOptions = $config->getCustomOptions();
         foreach ($customOptions as $key => $value) {
             if (isset($params[$key])) {

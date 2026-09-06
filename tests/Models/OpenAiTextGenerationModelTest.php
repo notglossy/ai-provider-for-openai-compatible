@@ -18,11 +18,14 @@ use WordPress\AiClient\Providers\Http\DTO\Response;
 use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
+use WordPress\AiClient\Results\DTO\GenerativeAiResult;
 
 /**
  * Tests for the OpenAI text generation model.
  *
  * @since 1.1.0
+ *
+ * @phpstan-import-type ModelConfigArrayShape from ModelConfig
  */
 class OpenAiTextGenerationModelTest extends TestCase
 {
@@ -66,7 +69,7 @@ class OpenAiTextGenerationModelTest extends TestCase
      *
      * @dataProvider conflictingSamplingConfigProvider
      *
-     * @param array<string, mixed> $configData The model configuration data.
+     * @param ModelConfigArrayShape $configData The model configuration data.
      * @param string $expectedParam The sampling parameter expected to be reported.
      */
     public function testSamplingParamsWithExplicitReasoningEffortAreRejected(
@@ -84,7 +87,7 @@ class OpenAiTextGenerationModelTest extends TestCase
     /**
      * Data provider for testSamplingParamsWithExplicitReasoningEffortAreRejected().
      *
-     * @return array<string, array{array<string, mixed>, string}> Test cases.
+     * @return array<string, array{ModelConfigArrayShape, string}> Test cases.
      */
     public static function conflictingSamplingConfigProvider(): array
     {
@@ -261,6 +264,9 @@ class OpenAiTextGenerationModelTest extends TestCase
         ]));
 
         $result = $method->invoke($model, $response);
+        if (!$result instanceof GenerativeAiResult) {
+            $this->fail('parseResponseToGenerativeAiResult() did not return a GenerativeAiResult.');
+        }
         $parts = $result->getCandidates()[0]->getMessage()->getParts();
 
         $this->assertCount(2, $parts);
@@ -332,7 +338,7 @@ class OpenAiTextGenerationModelTest extends TestCase
      *
      * @param list<array<string, mixed>> $output The response output items.
      */
-    private function parseResponse(array $output): \WordPress\AiClient\Results\DTO\GenerativeAiResult
+    private function parseResponse(array $output): GenerativeAiResult
     {
         $model = $this->createTextGenerationModel();
         $method = new ReflectionMethod($model, 'parseResponseToGenerativeAiResult');
@@ -344,13 +350,18 @@ class OpenAiTextGenerationModelTest extends TestCase
             'output' => $output,
         ]));
 
-        return $method->invoke($model, $response);
+        $result = $method->invoke($model, $response);
+        if (!$result instanceof GenerativeAiResult) {
+            $this->fail('parseResponseToGenerativeAiResult() did not return a GenerativeAiResult.');
+        }
+
+        return $result;
     }
 
     /**
      * Prepares request parameters for a `gpt-5.2` model with the given configuration.
      *
-     * @param array<string, mixed> $configData The model configuration data.
+     * @param ModelConfigArrayShape $configData The model configuration data.
      * @return array<string, mixed> The prepared request parameters.
      */
     private function prepareParams(array $configData): array
