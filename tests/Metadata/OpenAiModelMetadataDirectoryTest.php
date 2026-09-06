@@ -9,6 +9,7 @@ use ReflectionMethod;
 use WordPress\AiClient\Providers\Http\DTO\Response;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Providers\Models\DTO\SupportedOption;
+use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
 use WordPress\AiClient\Providers\Models\Enums\OptionEnum;
 use NotGlossy\AiProviderForOpenAiCompatible\Metadata\OpenAiModelMetadataDirectory;
 
@@ -126,6 +127,64 @@ class OpenAiModelMetadataDirectoryTest extends TestCase
                 sprintf('Expected model "gpt-5" to support the "%s" option.', $option->value)
             );
         }
+    }
+
+    /**
+     * Tests that vendor-prefixed and fine-tuned IDs classify via the normalized ID.
+     *
+     * Aggregators namespace IDs by vendor (`openai/gpt-4o`); fine-tuned models carry
+     * an `ft:` envelope. Both must match the same branches as bare OpenAI IDs, while
+     * the metadata keeps the full server ID so API requests use it verbatim.
+     *
+     * @dataProvider prefixedModelClassificationProvider
+     *
+     * @param string $modelId The model ID returned by the models endpoint.
+     * @param string $expectedCapability The capability value the model must advertise.
+     */
+    public function testPrefixedModelClassification(string $modelId, string $expectedCapability): void
+    {
+        $modelMetadata = $this->parseSingleModelMetadata($modelId);
+
+        $this->assertSame($modelId, $modelMetadata->getId());
+
+        $capabilityNames = array_map(
+            static function ($capability): string {
+                return $capability->value;
+            },
+            $modelMetadata->getSupportedCapabilities()
+        );
+        $this->assertContains(
+            $expectedCapability,
+            $capabilityNames,
+            sprintf('Expected model "%s" to advertise the "%s" capability.', $modelId, $expectedCapability)
+        );
+    }
+
+    /**
+     * Data provider for vendor-prefixed and fine-tuned model classification.
+     *
+     * @return array<string, array{string, string}> Test cases with model ID and expected capability.
+     */
+    public static function prefixedModelClassificationProvider(): array
+    {
+        return [
+            'vendor-prefixed embedding model' => [
+                'openai/text-embedding-3-small',
+                CapabilityEnum::EMBEDDING_GENERATION,
+            ],
+            'vendor-prefixed speech model' => [
+                'openai/gpt-4o-mini-tts',
+                CapabilityEnum::TEXT_TO_SPEECH_CONVERSION,
+            ],
+            'vendor-prefixed reasoning model keeps text generation' => [
+                'openai/o4-mini',
+                CapabilityEnum::TEXT_GENERATION,
+            ],
+            'fine-tuned embedding model uses base capabilities' => [
+                'ft:text-embedding-ada-002:my-org::abc123',
+                CapabilityEnum::EMBEDDING_GENERATION,
+            ],
+        ];
     }
 
     /**
