@@ -114,13 +114,13 @@ class OpenAiProvider extends AbstractApiProvider
             if (function_exists("__")) {
                 // phpcs:ignore Generic.Files.LineLength.TooLong
                 $providerMetadataArgs[] = __(
-                    "Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).",
+                    "Text, image, embedding, and speech generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).",
                     "ai-provider-for-openai-compatible",
                 );
             } else {
                 // phpcs:ignore Generic.Files.LineLength.TooLong
                 $providerMetadataArgs[] =
-                    "Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).";
+                    "Text, image, embedding, and speech generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).";
             }
         }
         // Provider logoPath support was added in 1.3.0.

@@ -74,7 +74,7 @@ Yes — they all implement the OpenAI Chat Completions API. Set the Base URL to 
 == Known limitations ==
 
 * Image generation only auto-classifies models with OpenAI naming (`dall-e-*`, `gpt-image-*`); compatible servers with custom image models won't expose them through this provider.
-* Text-to-speech is not yet implemented.
+* Text-to-speech targets OpenAI naming (`tts-*`, `*-tts`); compatible servers with custom speech models need matching IDs.
 * The `Auto` API-style mode uses a smart default (Responses for api.openai.com, Chat Completions elsewhere). Runtime probe-and-cache is a follow-up; override explicitly via the API Style setting if needed.
 
 == Changelog ==
