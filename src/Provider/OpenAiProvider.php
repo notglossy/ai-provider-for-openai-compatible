@@ -6,8 +6,10 @@ namespace NotGlossy\AiProviderForOpenAiCompatible\Provider;
 
 use NotGlossy\AiProviderForOpenAiCompatible\Metadata\OpenAiModelMetadataDirectory;
 use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiChatCompletionsTextGenerationModel;
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiEmbeddingGenerationModel;
 use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiImageGenerationModel;
 use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextGenerationModel;
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextToSpeechConversionModel;
 use NotGlossy\AiProviderForOpenAiCompatible\Settings\Settings;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Common\Exception\RuntimeException;
@@ -20,6 +22,7 @@ use WordPress\AiClient\Providers\Enums\ProviderTypeEnum;
 use WordPress\AiClient\Providers\Http\Enums\RequestAuthenticationMethod;
 use WordPress\AiClient\Providers\Models\Contracts\ModelInterface;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
+use WordPress\AiClient\Providers\Models\EmbeddingGeneration\Contracts\EmbeddingGenerationModelInterface;
 
 /**
  * Class for the AI Provider for OpenAI-compatible endpoints.
@@ -49,7 +52,7 @@ class OpenAiProvider extends AbstractApiProvider
      */
     protected static function createModel(
         ModelMetadata $modelMetadata,
-        ProviderMetadata $providerMetadata,
+        ProviderMetadata $providerMetadata
     ): ModelInterface {
         $capabilities = $modelMetadata->getSupportedCapabilities();
         foreach ($capabilities as $capability) {
@@ -74,11 +77,15 @@ class OpenAiProvider extends AbstractApiProvider
                     $providerMetadata,
                 );
             }
+            // Embedding generation support was added in 1.4.0.
+            if (
+                $capability->isEmbeddingGeneration() &&
+                interface_exists(EmbeddingGenerationModelInterface::class)
+            ) {
+                return new OpenAiEmbeddingGenerationModel($modelMetadata, $providerMetadata);
+            }
             if ($capability->isTextToSpeechConversion()) {
-                // TODO: Implement OpenAiTextToSpeechConversionModel.
-                throw new RuntimeException(
-                    "OpenAI text to speech conversion model class is not yet implemented.",
-                );
+                return new OpenAiTextToSpeechConversionModel($modelMetadata, $providerMetadata);
             }
         }
 
@@ -105,15 +112,15 @@ class OpenAiProvider extends AbstractApiProvider
         if (version_compare(AiClient::VERSION, "1.2.0", ">=")) {
             // For WordPress, we should translate the description.
             if (function_exists("__")) {
-                // phpcs:ignore Generic.Files.LineLength.TooLong
                 $providerMetadataArgs[] = __(
-                    "Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).",
+                    // phpcs:ignore Generic.Files.LineLength.TooLong
+                    "Text, image, embedding, and speech generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).",
                     "ai-provider-for-openai-compatible",
                 );
             } else {
-                // phpcs:ignore Generic.Files.LineLength.TooLong
                 $providerMetadataArgs[] =
-                    "Text and image generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).";
+                    // phpcs:ignore Generic.Files.LineLength.TooLong
+                    "Text, image, embedding, and speech generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).";
             }
         }
         // Provider logoPath support was added in 1.3.0.

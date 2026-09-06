@@ -27,22 +27,14 @@ echo "Building $SLUG..."
 echo "→ Staging files"
 rm -rf "$BUILD_DIR"
 mkdir -p "$STAGE"
+# .distignore is the single source of truth for what ships (CI verifies it);
+# the extra excludes below are local-only files that never belong in a zip.
 rsync -a \
-  --exclude='/.git' \
-  --exclude='/.github' \
-  --exclude='/.gitattributes' \
-  --exclude='/.gitignore' \
-  --exclude='/.distignore' \
-  --exclude='/.wordpress-org' \
+  --exclude-from="$ROOT/.distignore" \
   --exclude='/.claude' \
   --exclude='/.phpactor.json' \
   --exclude='/bin' \
-  --exclude='/composer.json' \
-  --exclude='/composer.lock' \
-  --exclude='/phpcs.xml.dist' \
-  --exclude='/phpstan.neon.dist' \
   --exclude='/build' \
-  --exclude='/vendor' \
   --exclude='.DS_Store' \
   "$ROOT/" "$STAGE/"
 
