@@ -20,6 +20,9 @@ use WordPress\AiClient\Providers\Enums\ProviderTypeEnum;
 use WordPress\AiClient\Providers\Http\Enums\RequestAuthenticationMethod;
 use WordPress\AiClient\Providers\Models\Contracts\ModelInterface;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiEmbeddingGenerationModel;
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextToSpeechConversionModel;
+use WordPress\AiClient\Providers\Models\EmbeddingGeneration\Contracts\EmbeddingGenerationModelInterface;
 
 /**
  * Class for the AI Provider for OpenAI-compatible endpoints.
@@ -74,11 +77,15 @@ class OpenAiProvider extends AbstractApiProvider
                     $providerMetadata,
                 );
             }
+            // Embedding generation support was added in 1.4.0.
+            if (
+                $capability->isEmbeddingGeneration() &&
+                interface_exists(EmbeddingGenerationModelInterface::class)
+            ) {
+                return new OpenAiEmbeddingGenerationModel($modelMetadata, $providerMetadata);
+            }
             if ($capability->isTextToSpeechConversion()) {
-                // TODO: Implement OpenAiTextToSpeechConversionModel.
-                throw new RuntimeException(
-                    "OpenAI text to speech conversion model class is not yet implemented.",
-                );
+                return new OpenAiTextToSpeechConversionModel($modelMetadata, $providerMetadata);
             }
         }
 

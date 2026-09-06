@@ -2,7 +2,7 @@
 Contributors: notglossy
 Tags: ai, openai, openai-compatible, ollama, llm
 Requires at least: 7.0
-Tested up to: 7.0
+Tested up to: 7.1
 Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPL-2.0-or-later
@@ -86,6 +86,23 @@ Yes — they all implement the OpenAI Chat Completions API. Set the Base URL to 
 * Add Chat Completions API support (in addition to the existing Responses API). Auto selection picks the right one per host.
 * Permissive model classification: unmatched model IDs are exposed as text-generation by default (toggle to strict on the settings page).
 * Renames the registered provider ID from `openai` to `openai-compatible`. Legacy `OPENAI_API_KEY` continues to be honored as a fallback.
+= 1.1.0 - 2026-08-17 =
+
+**Added**
+
+* Support for OpenAI embedding models, including batch inputs, custom dimensions, token usage, and result metadata ([#34](https://github.com/WordPress/ai-provider-for-openai/pull/34)).
+* Support for fine-tuned OpenAI models by deriving capabilities from their underlying base models ([#17](https://github.com/WordPress/ai-provider-for-openai/pull/17)).
+* Support for editing and refining generated images using reference images and OpenAI’s image-editing endpoint ([#29](https://github.com/WordPress/ai-provider-for-openai/pull/29)).
+* A `TokenLimitReachedException` when OpenAI responses are incomplete because the maximum output-token limit was reached ([#10](https://github.com/WordPress/ai-provider-for-openai/pull/10)).
+
+**Changed**
+
+* Made sampling-option capabilities model-aware for reasoning models, added Responses API support for log probabilities, and reject incompatible sampling and reasoning configurations before sending a request ([#40](https://github.com/WordPress/ai-provider-for-openai/pull/40)).
+* Bumped WordPress tested-up-to version 7.1 ([#43](https://github.com/WordPress/ai-provider-for-openai/pull/43)).
+
+**Fixed**
+
+* Function-call name handling for names that do not meet OpenAI’s naming requirements, while preserving the original PHP AI Client function names returned to callers ([#31](https://github.com/WordPress/ai-provider-for-openai/pull/31)).
 
 = 1.0.3 =
 
