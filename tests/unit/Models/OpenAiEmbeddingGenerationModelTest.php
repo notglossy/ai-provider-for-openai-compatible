@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NotGlossy\AiProviderForOpenAiCompatible\Tests\unit\Models;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiEmbeddingGenerationModel;
 use PHPUnit\Framework\TestCase;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 use WordPress\AiClient\Files\DTO\File;
@@ -18,7 +19,6 @@ use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Providers\Models\EmbeddingGeneration\Contracts\EmbeddingGenerationModelInterface;
 use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
-use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiEmbeddingGenerationModel;
 
 /**
  * @covers \NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiEmbeddingGenerationModel

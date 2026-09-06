@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NotGlossy\AiProviderForOpenAiCompatible\Models;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Provider\OpenAiProvider;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 use WordPress\AiClient\Messages\DTO\MessagePart;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiBasedModel;
@@ -16,7 +17,6 @@ use WordPress\AiClient\Providers\Models\EmbeddingGeneration\Contracts\EmbeddingG
 use WordPress\AiClient\Results\DTO\Embedding;
 use WordPress\AiClient\Results\DTO\EmbeddingResult;
 use WordPress\AiClient\Results\DTO\TokenUsage;
-use NotGlossy\AiProviderForOpenAiCompatible\Provider\OpenAiProvider;
 
 /**
  * Class for an OpenAI embedding generation model using the Embeddings API.

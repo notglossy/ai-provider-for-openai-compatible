@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NotGlossy\AiProviderForOpenAiCompatible\Tests\Models;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextGenerationModel;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
@@ -17,7 +18,6 @@ use WordPress\AiClient\Providers\Http\DTO\Response;
 use WordPress\AiClient\Providers\Models\DTO\ModelConfig;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
-use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextGenerationModel;
 
 /**
  * Tests for the OpenAI text generation model.

@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace NotGlossy\AiProviderForOpenAiCompatible\Tests\Metadata;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Metadata\OpenAiModelMetadataDirectory;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use WordPress\AiClient\Providers\Http\DTO\Response;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 use WordPress\AiClient\Providers\Models\DTO\SupportedOption;
+use WordPress\AiClient\Providers\Models\EmbeddingGeneration\Contracts\EmbeddingGenerationModelInterface;
 use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
 use WordPress\AiClient\Providers\Models\Enums\OptionEnum;
-use NotGlossy\AiProviderForOpenAiCompatible\Metadata\OpenAiModelMetadataDirectory;
 
 /**
  * Tests for the OpenAI model metadata directory.
@@ -143,6 +144,13 @@ class OpenAiModelMetadataDirectoryTest extends TestCase
      */
     public function testPrefixedModelClassification(string $modelId, string $expectedCapability): void
     {
+        if (
+            $expectedCapability === CapabilityEnum::EMBEDDING_GENERATION
+            && !interface_exists(EmbeddingGenerationModelInterface::class)
+        ) {
+            $this->markTestSkipped('Embedding generation requires PHP AI Client 1.4.0 or later.');
+        }
+
         $modelMetadata = $this->parseSingleModelMetadata($modelId);
 
         $this->assertSame($modelId, $modelMetadata->getId());

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NotGlossy\AiProviderForOpenAiCompatible\Models;
 
+use NotGlossy\AiProviderForOpenAiCompatible\Provider\OpenAiProvider;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 use WordPress\AiClient\Files\DTO\File;
 use WordPress\AiClient\Messages\DTO\Message;
@@ -20,7 +21,6 @@ use WordPress\AiClient\Results\DTO\Candidate;
 use WordPress\AiClient\Results\DTO\GenerativeAiResult;
 use WordPress\AiClient\Results\DTO\TokenUsage;
 use WordPress\AiClient\Results\Enums\FinishReasonEnum;
-use NotGlossy\AiProviderForOpenAiCompatible\Provider\OpenAiProvider;
 
 /**
  * Class for an OpenAI text-to-speech conversion model using the Audio Speech API.

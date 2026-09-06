@@ -6,8 +6,10 @@ namespace NotGlossy\AiProviderForOpenAiCompatible\Provider;
 
 use NotGlossy\AiProviderForOpenAiCompatible\Metadata\OpenAiModelMetadataDirectory;
 use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiChatCompletionsTextGenerationModel;
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiEmbeddingGenerationModel;
 use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiImageGenerationModel;
 use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextGenerationModel;
+use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextToSpeechConversionModel;
 use NotGlossy\AiProviderForOpenAiCompatible\Settings\Settings;
 use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Common\Exception\RuntimeException;
@@ -20,8 +22,6 @@ use WordPress\AiClient\Providers\Enums\ProviderTypeEnum;
 use WordPress\AiClient\Providers\Http\Enums\RequestAuthenticationMethod;
 use WordPress\AiClient\Providers\Models\Contracts\ModelInterface;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
-use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiEmbeddingGenerationModel;
-use NotGlossy\AiProviderForOpenAiCompatible\Models\OpenAiTextToSpeechConversionModel;
 use WordPress\AiClient\Providers\Models\EmbeddingGeneration\Contracts\EmbeddingGenerationModelInterface;
 
 /**
@@ -52,7 +52,7 @@ class OpenAiProvider extends AbstractApiProvider
      */
     protected static function createModel(
         ModelMetadata $modelMetadata,
-        ProviderMetadata $providerMetadata,
+        ProviderMetadata $providerMetadata
     ): ModelInterface {
         $capabilities = $modelMetadata->getSupportedCapabilities();
         foreach ($capabilities as $capability) {
@@ -112,14 +112,14 @@ class OpenAiProvider extends AbstractApiProvider
         if (version_compare(AiClient::VERSION, "1.2.0", ">=")) {
             // For WordPress, we should translate the description.
             if (function_exists("__")) {
-                // phpcs:ignore Generic.Files.LineLength.TooLong
                 $providerMetadataArgs[] = __(
+                    // phpcs:ignore Generic.Files.LineLength.TooLong
                     "Text, image, embedding, and speech generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).",
                     "ai-provider-for-openai-compatible",
                 );
             } else {
-                // phpcs:ignore Generic.Files.LineLength.TooLong
                 $providerMetadataArgs[] =
+                    // phpcs:ignore Generic.Files.LineLength.TooLong
                     "Text, image, embedding, and speech generation against any OpenAI-compatible endpoint (OpenAI, Together.ai, Groq, OpenRouter, Ollama, vLLM, LM Studio, etc.).";
             }
         }
