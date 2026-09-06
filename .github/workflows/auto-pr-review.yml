@@ -79,11 +79,26 @@ jobs:
         run: git fetch --no-tags origin "${{ github.event.pull_request.base.ref }}"
 
       # --- OpenCode install (opencode backend only) ------------------------
+      # Pinned release, verified by checksum, instead of `curl | bash` of the
+      # upstream installer (which runs whatever the latest install script is,
+      # with AI_API_KEY in scope). The tarball is the npm platform package for
+      # the same release the installer would fetch from GitHub. To bump: change
+      # both values together; the checksum is sha256 of the .tgz.
       - name: Install OpenCode
         if: env.RUN_THIS_PASS == 'true' && env.AI_BACKEND == 'opencode'
+        env:
+          OPENCODE_VERSION: "1.18.29"
+          OPENCODE_SHA256: "a2df564ba242759e3ee27cbd356da786243a3d3fd911cf5aa2c417521aef3042"
         run: |
-          curl -fsSL https://opencode.ai/install | bash
+          set -euo pipefail
+          tgz="$RUNNER_TEMP/opencode-linux-x64.tgz"
+          curl -fsSL --retry 3 -o "$tgz" \
+            "https://registry.npmjs.org/opencode-linux-x64/-/opencode-linux-x64-${OPENCODE_VERSION}.tgz"
+          echo "${OPENCODE_SHA256}  ${tgz}" | sha256sum -c -
+          tar -xzf "$tgz" -C "$RUNNER_TEMP" package/bin/opencode
+          install -D -m 0755 "$RUNNER_TEMP/package/bin/opencode" "$HOME/.opencode/bin/opencode"
           echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+          "$HOME/.opencode/bin/opencode" --version
 
       # --- Review ----------------------------------------------------------
       - name: Run ${{ matrix.pass }} pass

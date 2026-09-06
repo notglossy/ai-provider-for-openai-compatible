@@ -69,7 +69,9 @@ Optional:
   AI_PONYTAIL           "off" (default), "on" = correctness review + Ponytail
                         over-engineering pass, "only" = Ponytail pass alone.
                         Loads the ruleset from github.com/DietrichGebert/ponytail
-  AI_PONYTAIL_REF       Git ref of the Ponytail repo to load (default: pinned tag)
+  AI_PONYTAIL_REF       Git ref of the Ponytail repo to load (default: pinned tag).
+                        The opencode backend pins its Ponytail npm plugin to the
+                        same release, so a release tag (vX.Y.Z) is expected.
 """
 
 from __future__ import annotations
@@ -153,6 +155,22 @@ You MUST respond with a single JSON object and nothing else, in this exact shape
 PONYTAIL_REPO = "DietrichGebert/ponytail"
 PONYTAIL_DEFAULT_REF = "v4.9.0"
 PONYTAIL_FILES = ["AGENTS.md", "skills/ponytail-review/SKILL.md"]
+# The OpenCode backend loads Ponytail as its npm plugin instead. Releases are
+# published to npm under the same version as the git tag, so the plugin is
+# pinned to the ref above (minus the leading "v") and moves with it.
+PONYTAIL_PLUGIN = "@dietrichgebert/ponytail"
+
+
+def ponytail_plugin_spec(ref: str) -> str:
+    """npm spec for the OpenCode plugin, pinned to the release matching `ref`.
+
+    A non-release ref (branch, sha) has no npm counterpart; warn and fall back
+    to the unpinned package so an explicit AI_PONYTAIL_REF override still runs."""
+    m = re.fullmatch(r"v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)", ref.strip())
+    if not m:
+        log(f"::warning::AI_PONYTAIL_REF {ref!r} is not a release tag; OpenCode loads {PONYTAIL_PLUGIN} unpinned")
+        return PONYTAIL_PLUGIN
+    return f"{PONYTAIL_PLUGIN}@{m.group(1)}"
 
 PONYTAIL_SCHEMA_ADDENDUM = """
 Ponytail additions to the JSON shape:
@@ -929,6 +947,7 @@ def write_opencode_config(
     max_tokens: int,
     ponytail: bool,
     extra_body: dict | None,
+    ponytail_ref: str = PONYTAIL_DEFAULT_REF,
 ) -> str:
     """Write an isolated opencode.json + system prompt and return the config path.
     The API key is referenced via {env:AI_API_KEY}, never written to disk."""
@@ -987,7 +1006,7 @@ def write_opencode_config(
         },
     }
     if ponytail:
-        config["plugin"] = ["@dietrichgebert/ponytail"]
+        config["plugin"] = [ponytail_plugin_spec(ponytail_ref)]
 
     cfg_path = os.path.join(cfg_dir, "opencode.json")
     with open(cfg_path, "w") as f:
@@ -1336,6 +1355,7 @@ def main() -> int:
         cfg_path = write_opencode_config(
             cfg_dir, model, base_url, system, temperature, max_tokens,
             ponytail=(ponytail_mode != "off"), extra_body=extra_body or None,
+            ponytail_ref=ponytail_ref,
         )
         log(f"Calling {model} via OpenCode at {base_url}")
         raw = call_opencode(repo_dir, cfg_path, model, task, agent_timeout)
